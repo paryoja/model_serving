@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/work
+    environment:
+      - DEBUG=False
+      - FLASK_APP=/work/src/app.py
+    command: ["gunicorn", "-b", "0.0.0.0:8000", "--chdir", "/work/src", "--timeout", "1000", "-w", "1", "app:app"]

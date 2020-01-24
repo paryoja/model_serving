@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="27846a8e-1320-4108-aff9-e6961269598a" name="gcp" url="http://35.230.68.217">
+        <fileTransfer host="35.230.68.217" port="22" privateKey="C:\Users\paryoja\Downloads\seoul.pem" rootFolder="/home/yj0604.park" accessType="SFTP" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
