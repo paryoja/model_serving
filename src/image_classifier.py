@@ -48,19 +48,21 @@ model = Classifier()
 
 
 def download_image(url, directory):
-    r = requests.get(url, stream=True)
+    filename = pathlib.Path(url).name
+    directory_path = pathlib.Path(directory)
+    filepath = directory_path / filename
 
-    if r.status_code == 200:
-        filename = pathlib.Path(url).name
+    if not filepath.exists():
 
-        directory_path = pathlib.Path(directory)
-        directory_path.mkdir(exist_ok=True, parents=True)
+        r = requests.get(url, stream=True)
 
-        filepath = directory_path / filename
-        with open(directory_path / filename, 'wb') as f:
-            r.raw.decode_content = True
-            shutil.copyfileobj(r.raw, f)
-        return filepath
+        if r.status_code == 200:
+            directory_path.mkdir(exist_ok=True, parents=True)
+
+            with open(directory_path / filename, 'wb') as f:
+                r.raw.decode_content = True
+                shutil.copyfileobj(r.raw, f)
+    return filepath
 
 
 def classification(filepath):
