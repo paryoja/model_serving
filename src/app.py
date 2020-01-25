@@ -23,12 +23,13 @@ def people_classification():
 
     current_date = datetime.datetime.now().strftime('%Y_%m_%d')
     filepath = image_classifier.download_image(json_request["requested_url"], media_root + current_date)
-    classification, label = image_classifier.classification(filepath)
+    classification, label, version = image_classifier.classification(filepath)
 
     result = {
         'status': 'success',
         'classification': classification,
         'label': label,
+        'version': version,
     }
 
     return json.dumps(result), 200

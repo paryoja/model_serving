@@ -29,8 +29,10 @@ class Classifier:
 
         # place the head FC model on top of the base model (this will become
         # the actual model we will train)
+        model_file = "model (1).h5"
         self.model = Model(inputs=base_model.input, outputs=head_model)
-        self.model.load_weights("/work/models/model.h5")
+        self.model.load_weights("/work/models/{}".format(model_file))
+        self.version = model_file
 
         self.label_map = {
             0: 'True',
@@ -73,11 +75,12 @@ def classification(filepath):
 
     predictions = model.predict(np_image)
     label = model.get_label(predictions)
+    version = model.version
 
     prob_list = []
     for prob in predictions:
         prob_list.append(prob.astype(float))
-    return prob_list, label
+    return prob_list, label, version
 
 
 def restore_original_image_from_array(x, data_format='channels_first'):
