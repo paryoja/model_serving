@@ -8,16 +8,19 @@ from tensorflow import keras
 class DeepModel:
     def __init__(self, base_model, format_fn):
         self.base_model = base_model
+        self.version = "1.0"
 
         # TODO: 여기서 모델 추가 구현 하지 말고 다른데서?
-        additional_conv_layer = keras.layers.Conv2D(32, 3, activation='relu')
+        additional_conv_layer = keras.layers.Conv2D(32, 3, padding="same", activation='relu')
         global_average_layer = keras.layers.GlobalAveragePooling2D()
+        dense_layer = keras.layers.Dense(512)
         prediction_layer = keras.layers.Dense(2)
 
         self.model = keras.Sequential([
             base_model,
             additional_conv_layer,
             global_average_layer,
+            dense_layer,
             prediction_layer
         ])
 
@@ -83,12 +86,38 @@ class DeepModel:
                                  callbacks=self.callbacks)
 
         write_history(history)
+        self.save()
 
-    def validate(self):
-        pass
+    def validate(self, dataset):
+        raw_train, raw_val = dataset.get_raw_data()
 
-    def test(self):
-        pass
+        train = raw_train.map(self.format_fn)
+        val = raw_val.map(self.format_fn)
+
+        train_loss, train_accuracy = self.model.evaluate(train)
+        val_loss, val_accuracy = self.model.evaluate(val)
+
+        print("train loss: {:.2f}".format(train_loss))
+        print("train accuracy: {:.2f}".format(train_accuracy))
+        print("val loss: {:.2f}".format(val_loss))
+        print("val accuracy: {:.2f}".format(val_accuracy))
+
+    def test(self, np_image):
+        formatted_image = self.format_fn(np_image)
+
+        predictions = self.model.predict(formatted_image)
+        label = self.model.get_label(predictions)
+        version = self.model.version
+
+        prob_list = []
+        for prob in predictions:
+            prob_list.append(prob.astype(float))
+        return prob_list, label, version
+
+    def save(self):
+        with open("model.json", "w") as json_file:
+            model_json = self.model.to_json()
+            json_file.write(model_json)
 
 
 def write_history(history):

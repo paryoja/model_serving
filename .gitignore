@@ -1,2 +1,4 @@
 models/
 media/
+data/
+**/__pycache__/
