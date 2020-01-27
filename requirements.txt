@@ -4,3 +4,6 @@ requests==2.22.0
 pillow==7.0.0
 gunicorn==20.0.4
 numpy==1.18.1
+lz4==3.0.2
+tqdm==4.42.0
+matplotlib==3.1.2
