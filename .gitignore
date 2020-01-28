@@ -2,3 +2,6 @@ models/
 media/
 data/
 **/__pycache__/
+model.h5
+graph/
+model.json

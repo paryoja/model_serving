@@ -1,31 +1,44 @@
 import datetime
 
 import matplotlib.pyplot as plt
+import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+from tensorflow.keras.applications.mobilenet_v2 import decode_predictions
+from tensorflow.keras.models import model_from_json
 
 
 class DeepModel:
-    def __init__(self, base_model, format_fn):
+    def __init__(self, base_model, format_fn, base_model_only, model_name, label_fn):
         self.base_model = base_model
         self.version = "1.0"
+        self.model_name = model_name
+        self.base_model_only = base_model_only
+        self.label_fn = label_fn
 
-        # TODO: 여기서 모델 추가 구현 하지 말고 다른데서?
-        additional_conv_layer = keras.layers.Conv2D(32, 3, padding="same", activation='relu')
-        global_average_layer = keras.layers.GlobalAveragePooling2D()
-        dense_layer = keras.layers.Dense(512)
-        prediction_layer = keras.layers.Dense(2)
+        if not base_model_only:
+            # TODO: 여기서 모델 추가 구현 하지 말고 다른데서?
+            additional_conv_layer = keras.layers.Conv2D(32, 3, padding="same", activation='relu')
+            dropout_layer_1 = keras.layers.Dropout(0.5)
+            global_average_layer = keras.layers.GlobalAveragePooling2D()
+            dense_layer = keras.layers.Dense(512)
+            dropout_layer_2 = keras.layers.Dropout(0.5)
+            prediction_layer = keras.layers.Dense(2)
 
-        self.model = keras.Sequential([
-            base_model,
-            additional_conv_layer,
-            global_average_layer,
-            dense_layer,
-            prediction_layer
-        ])
+            self.model = keras.Sequential([
+                base_model,
+                additional_conv_layer,
+                dropout_layer_1,
+                global_average_layer,
+                dense_layer,
+                dropout_layer_2,
+                prediction_layer
+            ])
+        else:
+            self.model = self.base_model
 
         self.shuffle_buffer_size = 1000
-        self.batch_size = 64
+        self.batch_size = 92
         self.format_fn = format_fn
 
         # callbacks
@@ -66,11 +79,11 @@ class DeepModel:
             print("Min, Max for val batches")
             print_min_max(image[0])
 
-        base_learning_rate = 0.0001
-        self.model.compile(optimizer=keras.optimizers.RMSprop(lr=base_learning_rate),
+        base_learning_rate = 5e-6
+        self.model.compile(optimizer=keras.optimizers.RMSprop(lr=base_learning_rate, momentum=0.9),
                            loss="categorical_crossentropy",
                            metrics=['accuracy'])
-
+        self.save()
         self.model.summary()
 
         initial_epochs = 200
@@ -80,13 +93,22 @@ class DeepModel:
         print("initial loss: {:.2f}".format(loss0))
         print("initial accuracy: {:.2f}".format(accuracy0))
 
-        history = self.model.fit(train_batches,
-                                 epochs=initial_epochs,
-                                 validation_data=val_batches,
-                                 callbacks=self.callbacks)
+        try:
+            history = self.model.fit(train_batches,
+                                     epochs=initial_epochs,
+                                     validation_data=val_batches,
+                                     callbacks=self.callbacks,
+                                     verbose=1)
 
-        write_history(history)
-        self.save()
+            write_history(history)
+        except KeyboardInterrupt as e:
+            print(e)
+
+    def load_file(self, model_file, json_file):
+        with open(json_file) as f:
+            json_model = f.read()
+        self.model = model_from_json(json_model)
+        self.model.load_weights("{}".format(model_file))
 
     def validate(self, dataset):
         raw_train, raw_val = dataset.get_raw_data()
@@ -102,12 +124,15 @@ class DeepModel:
         print("val loss: {:.2f}".format(val_loss))
         print("val accuracy: {:.2f}".format(val_accuracy))
 
-    def test(self, np_image):
-        formatted_image = self.format_fn(np_image)
+    def predict(self, np_image):
+        formatted_image = self.format_fn(np_image, "?")
 
-        predictions = self.model.predict(formatted_image)
-        label = self.model.get_label(predictions)
-        version = self.model.version
+        predictions = self.model.predict(tf.expand_dims(formatted_image[0], axis=0))
+        if self.base_model_only:
+            label = decode_predictions(predictions)
+        else:
+            label = self.label_fn(predictions)
+        version = self.version
 
         prob_list = []
         for prob in predictions:
@@ -118,6 +143,7 @@ class DeepModel:
         with open("model.json", "w") as json_file:
             model_json = self.model.to_json()
             json_file.write(model_json)
+        # self.model.save_weights('final_model', save_format='tf')
 
 
 def write_history(history):
@@ -168,13 +194,43 @@ def load_model(base_model_name: str) -> DeepModel:
                                               include_top=False,
                                               weights='imagenet')
         format_fn = format_example
-
+        base_model_only = False
     elif base_model_name == "MobileNetV2":
         base_model = keras.applications.MobileNetV2(input_shape=img_shape,
                                                     include_top=False,
                                                     weights='imagenet')
         format_fn = format_example
+        base_model_only = False
+    elif base_model_name == "Xception":
+        img_size = 299
+        img_shape = (img_size, img_size, 3)
+        base_model = keras.applications.Xception(input_shape=img_shape,
+                                                 include_top=False,
+                                                 weights='imagenet')
+        format_fn = format_example
+        base_model_only = False
+    elif base_model_name == "MobileNetV2_only":
+        base_model = keras.applications.MobileNetV2(input_shape=img_shape,
+                                                    include_top=True,
+                                                    weights='imagenet')
+        format_fn = format_example
+        base_model_only = True
+    elif base_model_name == "Xception_only":
+        img_size = 299
+        img_shape = (img_size, img_size, 3)
+        base_model = keras.applications.Xception(input_shape=img_shape,
+                                                 include_top=True,
+                                                 weights='imagenet')
+        format_fn = format_example
+        base_model_only = True
     else:
         raise ValueError("Unknown base model {}".format(base_model_name))
 
-    return DeepModel(base_model, format_fn)
+    return DeepModel(base_model, format_fn, base_model_only, base_model_name, simple_label)
+
+
+def simple_label(prediction):
+    if np.argmax(prediction).astype('int32') == 0:
+        return "True"
+    else:
+        return "False"

@@ -42,11 +42,15 @@ def parse(data):
     count += 1
 
 
-def download(label="True"):
+def download_pokemon(label="yes"):
+    download(url="http://13.125.1.208/book/pokemon_export/", label=label)
+
+
+def download(url, label="True"):
     page = 1
     with multiprocessing.Pool(10) as pool:
         while True:
-            results = requests.get("http://13.125.1.208/book/people_result/download/" + label + "/" + str(page))
+            results = requests.get(url + label + "/" + str(page))
 
             pickled = base64.b85decode(results.text)
 

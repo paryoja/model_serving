@@ -7,6 +7,11 @@
           <mappings>
             <mapping deploy="/work/model_serving" local="$PROJECT_DIR$" web="/" />
           </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/data" />
+            <excludedPath local="true" path="$PROJECT_DIR$/graph" />
+            <excludedPath local="true" path="$PROJECT_DIR$/media" />
+          </excludedPaths>
         </serverdata>
       </paths>
     </serverData>
