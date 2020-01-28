@@ -15,7 +15,9 @@ def get_label(file_path, class_names):
 
 def decode_img(img, img_size):
     # convert the compressed string to a 3D uint8 tensor
+
     img = tf.image.decode_jpeg(img, channels=3)
+    # img = tf.image.decode_image(img, channels=3)
     # Use `convert_image_dtype` to convert to floats in the [0,1] range.
     img = tf.image.convert_image_dtype(img, tf.float32)
     # resize the image to the desired size.
@@ -57,29 +59,3 @@ class Dataset:
 
     def get_raw_data(self):
         return self.train_ds, self.val_ds
-
-
-# TODO: REMOVE it if it is not used anymore
-def prepare_for_training(ds, batch_size, cache=True, shuffle_buffer_size=1000):
-    # This is a small dataset, only load it once, and keep it in memory.
-    # use `.cache(filename)` to cache preprocessing work for datasets that don't
-    # fit in memory.
-
-    if cache:
-        if isinstance(cache, str):
-            ds = ds.cache(cache)
-        else:
-            ds = ds.cache()
-    # ds.map(tf.keras.applications.vgg16.preprocess_input, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    ds = ds.shuffle(buffer_size=shuffle_buffer_size)
-
-    # Repeat forever
-    ds = ds.repeat()
-
-    ds = ds.batch(batch_size)
-
-    # `prefetch` lets the dataset fetch batches in the background while the model
-    # is training.
-    ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-
-    return ds

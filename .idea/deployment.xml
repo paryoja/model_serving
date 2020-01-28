@@ -11,6 +11,7 @@
             <excludedPath local="true" path="$PROJECT_DIR$/data" />
             <excludedPath local="true" path="$PROJECT_DIR$/graph" />
             <excludedPath local="true" path="$PROJECT_DIR$/media" />
+            <excludedPath local="true" path="$PROJECT_DIR$/data_backup" />
           </excludedPaths>
         </serverdata>
       </paths>

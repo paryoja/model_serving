@@ -1,7 +1,14 @@
 models/
 media/
+data_backup/
 data/
 **/__pycache__/
-model.h5
+
 graph/
+
+model.h5
 model.json
+
+result.txt
+zip.txt
+blacklist.json

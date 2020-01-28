@@ -1,4 +1,5 @@
 import datetime
+import typing
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,12 +10,13 @@ from tensorflow.keras.models import model_from_json
 
 
 class DeepModel:
-    def __init__(self, base_model, format_fn, base_model_only, model_name, label_fn):
+    def __init__(self, base_model, format_fn, base_model_only, model_name, label_fn, class_names):
         self.base_model = base_model
         self.version = "1.0"
         self.model_name = model_name
         self.base_model_only = base_model_only
         self.label_fn = label_fn
+        self.class_names = class_names
 
         if not base_model_only:
             # TODO: 여기서 모델 추가 구현 하지 말고 다른데서?
@@ -23,7 +25,7 @@ class DeepModel:
             global_average_layer = keras.layers.GlobalAveragePooling2D()
             dense_layer = keras.layers.Dense(512)
             dropout_layer_2 = keras.layers.Dropout(0.5)
-            prediction_layer = keras.layers.Dense(2)
+            prediction_layer = keras.layers.Dense(len(self.class_names))
 
             self.model = keras.Sequential([
                 base_model,
@@ -186,7 +188,7 @@ def print_min_max(image):
     print("max", tf.math.reduce_max(image))
 
 
-def load_model(base_model_name: str) -> DeepModel:
+def load_model(base_model_name: str, class_names: typing.List) -> DeepModel:
     img_size = 224
     img_shape = (img_size, img_size, 3)
     if base_model_name == "VGG16":
@@ -226,7 +228,7 @@ def load_model(base_model_name: str) -> DeepModel:
     else:
         raise ValueError("Unknown base model {}".format(base_model_name))
 
-    return DeepModel(base_model, format_fn, base_model_only, base_model_name, simple_label)
+    return DeepModel(base_model, format_fn, base_model_only, base_model_name, simple_label, class_names)
 
 
 def simple_label(prediction):
