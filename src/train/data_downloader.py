@@ -6,7 +6,6 @@ import multiprocessing
 import pathlib
 import shutil
 
-import PIL
 import lz4.frame
 import requests
 import tensorflow as tf
@@ -74,13 +73,13 @@ def validate_image():
             img = tf.io.read_file(str_file_path)
             try:
                 tf.image.decode_jpeg(img, channels=3)
-            except Exception as e:
+            except Exception:
                 print("Converting", str_file_path)
                 try:
                     im = Image.open(str_file_path)
                     im.save(str_file_path, "JPEG")
 
-                except PIL.UnidentifiedImageError:
+                except Exception:
                     print("Converting Failed add to ignore list")
                     file_path.unlink()
                     str_file_path = str_file_path.replace("\\", "/")  # normalize directory splitter
