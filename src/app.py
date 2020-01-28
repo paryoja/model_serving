@@ -37,5 +37,5 @@ def people_classification():
     json_request = request.json
 
     filepath = model.save_img(json_request)
-    result = model.predict(filepath, "people_model")
+    result = model.predict(str(filepath), "people_model")
     return json.dumps(result), 200
