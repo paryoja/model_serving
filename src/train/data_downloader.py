@@ -56,6 +56,8 @@ def parse(data, data_type="pokemon_yes_no", black_list=None):
     # print(target_path + "/" + filename)
     if black_list and target_path + "/" + filename in black_list:
         print("Skipping {} since it is listed in blacklist".format(url))
+        return
+
     save_image(url, target_path, filename)
 
 
@@ -69,22 +71,35 @@ def validate_image():
     for file_path in pathlib.Path("data").glob("**/*"):
         if file_path.is_file():
             str_file_path = str(file_path)
+            normalized_str_file_path = str_file_path.replace("\\", "/")
+            if normalized_str_file_path in ignore_list:
+                print("Skipping {}".format(file_path))
+                file_path.unlink()
+                continue
 
             img = tf.io.read_file(str_file_path)
             try:
                 tf.image.decode_jpeg(img, channels=3)
             except Exception:
                 print("Converting", str_file_path)
+
                 try:
                     im = Image.open(str_file_path)
-                    im.save(str_file_path, "JPEG")
+                    try:
+                        im.save(str_file_path, "JPEG")
 
+                    except Exception:
+                        im.close()
+                        print("Converting Failed add to ignore list")
+                        file_path.unlink()
+
+                        if normalized_str_file_path not in ignore_list:
+                            ignore_list.append(normalized_str_file_path)
                 except Exception:
-                    print("Converting Failed add to ignore list")
                     file_path.unlink()
-                    str_file_path = str_file_path.replace("\\", "/")  # normalize directory splitter
-                    if str_file_path not in ignore_list:
-                        ignore_list.append(str_file_path)
+
+                    if normalized_str_file_path not in ignore_list:
+                        ignore_list.append(normalized_str_file_path)
 
     with open('blacklist.json', 'w') as w:
         w.write(json.dumps(ignore_list))

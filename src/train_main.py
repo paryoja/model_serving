@@ -4,11 +4,17 @@ import matplotlib.pyplot as plt
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+img_size_map = {
+    "Xception": 299,
+    "MobileNetV2": 224,
+}
+
 
 def main(need_download=False):
     from train import data_downloader
     from train import data_loader
     from model import keras_model
+    from model import custom_model
     from plot import show_single_image
     plt.interactive(False)
 
@@ -20,21 +26,25 @@ def main(need_download=False):
         data_downloader.download_pokemon(label="more")
         data_downloader.download_pokemon(label="little")
         data_downloader.validate_image()
+
     # load data
     # model_name = "MobileNetV2"
     model_name = "Xception"
-    dataset = data_loader.Dataset(model_name)
+    base_model_only = False
 
-    # load model
-    # model = keras_model.load_model("MobileNetV2_only")
-    model = keras_model.load_model(model_name, dataset.class_names)
+    data_info = data_loader.DatasetInfo(img_size=img_size_map[model_name])
+    dataset = data_loader.Dataset(data_info)
+
+    model_info = keras_model.ModelInfo(model_name, base_model_only=base_model_only, model_name="pokemon_model",
+                                       class_names=dataset.class_names, version="1.0", data_info=data_info)
+    model = custom_model.CNNWithDense(model_info)
 
     # model.train(dataset, update_base=True)
     if "only" not in model_name:
-        model.train(dataset, update_base=False)
+        train_info = keras_model.TrainInfo(learning_rate=1e-6, momentum=0.9, update_base=False)
+        model.train_model(dataset, train_info)
 
-        # model.load_file("model.h5", "model.json")
-
+    # sample train and test with it
     train, val = dataset.get_raw_data()
     for image in train:
         prob_list, label, version = model.predict(image[0])
@@ -45,4 +55,4 @@ def main(need_download=False):
 
 
 if __name__ == "__main__":
-    main(True)
+    main(False)

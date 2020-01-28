@@ -1,14 +1,16 @@
-import datetime
 import json
+import os
 
 from flask import Flask
 from flask import request
 
-import image_classifier
+from serving import model_loader
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 app = Flask(__name__)
 
-media_root = './media/'
+model = model_loader.load_model()
 
 
 @app.route('/')
@@ -16,20 +18,22 @@ def index():
     return 'Hello Flask'
 
 
+@app.route('/pokemon_classification', methods=['POST'])
+def pokemon_classification():
+    # requested_url 으로 전달된 url 이미지를 다운 받고 분석
+    json_request = request.json
+
+    filepath = model.save_img(json_request)
+    result = model.predict(str(filepath), "pokemon_model")
+    print(result)
+    return json.dumps(result), 200
+
+
 @app.route('/people_classification', methods=['POST'])
 def people_classification():
     # requested_url 으로 전달된 url 이미지를 다운 받고 분석
     json_request = request.json
 
-    current_date = datetime.datetime.now().strftime('%Y_%m_%d')
-    filepath = image_classifier.download_image(json_request["requested_url"], media_root + current_date)
-    classification, label, version = image_classifier.classification(filepath)
-
-    result = {
-        'status': 'success',
-        'classification': classification,
-        'label': label,
-        'version': version,
-    }
-
+    filepath = model.save_img(json_request)
+    result = model.predict(filepath, "people_model")
     return json.dumps(result), 200

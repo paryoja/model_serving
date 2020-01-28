@@ -32,8 +32,13 @@ def process_path(file_path, class_names, img_size):
     return img, label
 
 
+class DatasetInfo:
+    def __init__(self, img_size):
+        self.img_size = img_size
+
+
 class Dataset:
-    def __init__(self, model_name):
+    def __init__(self, dataset_info):
         data_dir = pathlib.Path('data/train')
         val_dir = pathlib.Path('data/validate/')
         self.class_names = np.array([item.name for item in data_dir.glob('*') if item.name != "LICENSE.txt"])
@@ -46,12 +51,8 @@ class Dataset:
 
         print("Data count ", self.data_count, ", Validate count ", self.validate_count)
 
-        if "Xception" in model_name:
-            img_size = 299
-        else:
-            img_size = 224
-
-        process_path_partial = functools.partial(process_path, class_names=self.class_names, img_size=img_size)
+        process_path_partial = functools.partial(process_path, class_names=self.class_names,
+                                                 img_size=dataset_info.img_size)
 
         # Set `num_parallel_calls` so multiple images are loaded/processed in parallel.
         self.train_ds = list_ds.map(process_path_partial, num_parallel_calls=tf.data.experimental.AUTOTUNE)
