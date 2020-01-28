@@ -133,7 +133,7 @@ class DeepModel:
         if self.base_model_only:
             label = decode_predictions(predictions)
         else:
-            label = self.label_fn(predictions)
+            label = self.label_fn(predictions, self.class_names)
         version = self.version
 
         prob_list = []
@@ -231,8 +231,5 @@ def load_model(base_model_name: str, class_names: typing.List) -> DeepModel:
     return DeepModel(base_model, format_fn, base_model_only, base_model_name, simple_label, class_names)
 
 
-def simple_label(prediction):
-    if np.argmax(prediction).astype('int32') == 0:
-        return "True"
-    else:
-        return "False"
+def simple_label(prediction, class_names):
+    return class_names[np.argmax(prediction).astype('int32')]
