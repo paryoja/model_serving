@@ -10,7 +10,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 app = Flask(__name__)
 
-model = model_loader.load_model()
+base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+print(base_path)
+model = model_loader.load_model(base_path)
 
 
 @app.route('/')

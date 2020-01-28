@@ -113,6 +113,12 @@ class ModelInfo:
             base_model = keras.applications.Xception(input_shape=img_shape,
                                                      include_top=base_model_only,
                                                      weights='imagenet')
+
+        elif base_model_name == "NASNetMobile":
+            base_model = keras.applications.NASNetMobile(input_shape=img_shape,
+                                                         include_top=base_model_only,
+                                                         weights='imagenet')
+
         else:
             raise KeyError("Unknown model name {}".format(base_model_name))
         return base_model

@@ -12,3 +12,4 @@ model.json
 result.txt
 zip.txt
 blacklist.json
+*.png

@@ -54,17 +54,17 @@ class ServingModel:
         return result
 
 
-def load_model():
-    with open('model_info.json') as f:
+def load_model(base_path):
+    with open(base_path + "/model_info.json") as f:
         all_model_info = json.load(f)
 
     deep_model_map = {}
     for k, v in all_model_info.items():
-        model_path = pathlib.Path(v)
+        model_path = pathlib.Path(base_path + "/" + v)
         json_model = model_path.parents[0] / 'model.json'
         with open(json_model) as f:
             loaded_model = model_from_json(f.read())
-        loaded_model.load_weights(v)
+        loaded_model.load_weights(base_path + "/" + v)
 
         model_info_json = model_path.parents[0] / 'model_info.json'
         model_info = keras_model.ModelInfo.load(str(model_info_json))
