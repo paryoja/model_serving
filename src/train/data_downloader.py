@@ -1,5 +1,6 @@
 import base64
 import functools
+import getpass
 import hashlib
 import json
 import multiprocessing
@@ -11,6 +12,18 @@ import requests
 import tensorflow as tf
 import tqdm
 from PIL import Image
+
+
+def get_session():
+    username = input("Username:")
+    password = getpass.getpass()
+
+    s = requests.Session()
+    r = s.get("http://13.125.1.208/book/login/?next=/book")
+    s.post("http://13.125.1.208/book/login/?next=/book",
+           data={"password": password, "username": username,
+                 "csrfmiddlewaretoken": r.cookies.get("csrftoken")})
+    return s
 
 
 def save_image(url, directory, filename):
@@ -48,9 +61,9 @@ def parse(data, data_type="pokemon_yes_no", black_list=None):
         label = data['fields']['selected']
 
     if url_hash < 90:
-        target_path = 'data/train/' + str(label)
+        target_path = 'data/{}/train/{}'.format(data_type, label)
     else:
-        target_path = 'data/validate/' + str(label)
+        target_path = 'data/{}/validate/{}'.format(data_type, label)
 
     # print(black_list)
     # print(target_path + "/" + filename)
@@ -61,14 +74,14 @@ def parse(data, data_type="pokemon_yes_no", black_list=None):
     save_image(url, target_path, filename)
 
 
-def validate_image():
+def validate_image(data_type="pokemon_yes_no"):
     print("Validate Images")
     if pathlib.Path('blacklist.json').exists():
         with open('blacklist.json', 'r') as f:
             ignore_list = json.load(f)
     else:
         ignore_list = []
-    for file_path in pathlib.Path("data").glob("**/*"):
+    for file_path in pathlib.Path("data/" + data_type + "/").glob("**/*"):
         if file_path.is_file():
             str_file_path = str(file_path)
             normalized_str_file_path = str_file_path.replace("\\", "/")
@@ -105,11 +118,15 @@ def validate_image():
         w.write(json.dumps(ignore_list))
 
 
-def download_pokemon(label="yes"):
-    download(url="http://13.125.1.208/book/pokemon_export/", label=label)
+def download_pokemon(session, label="yes"):
+    download(url="http://13.125.1.208/book/pokemon_export/", label=label, session=session)
 
 
-def download(url, label="True", data_type="pokemon_yes_no"):
+def download_people(session, label="True"):
+    download(url="http://13.125.1.208/book/people_result/download/", label=label, data_type="people", session=session)
+
+
+def download(url, session, label="True", data_type="pokemon_yes_no"):
     page = 1
 
     black_list_path = pathlib.Path("blacklist.json")
@@ -123,7 +140,7 @@ def download(url, label="True", data_type="pokemon_yes_no"):
     with multiprocessing.Pool(10) as pool:
         while True:
             request_url = url + label + "/" + str(page)
-            results = requests.get(url + label + "/" + str(page))
+            results = session.get(url + label + "/" + str(page))
             print(request_url)
 
             pickled = base64.b85decode(results.text)

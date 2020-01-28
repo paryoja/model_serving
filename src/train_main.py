@@ -20,14 +20,22 @@ def main(need_download=False):
     from plot import show_single_image
     plt.interactive(False)
 
+    # data_type = "pokemon_yes_no"
+    data_type = "people"
+
     # 다운 시작
     if need_download:
+        session = data_downloader.get_session()
         # data 폴더에 train/validate 폴더를 나누고 label 이름의 폴더로 다운로드 진행
-        data_downloader.download_pokemon(label="yes")
-        data_downloader.download_pokemon(label="no")
-        data_downloader.download_pokemon(label="more")
-        data_downloader.download_pokemon(label="little")
-        data_downloader.validate_image()
+        # data_downloader.download_pokemon(label="yes")
+        # data_downloader.download_pokemon(label="no")
+        # data_downloader.download_pokemon(label="more")
+        # data_downloader.download_pokemon(label="little")
+        # data_downloader.validate_image(data_type)
+
+        data_downloader.download_people(session, label="True")
+        data_downloader.download_people(session, label="False")
+        # data_downloader.validate_image(data_type)
 
     # load data
     model_name = "VGG16"
@@ -35,10 +43,10 @@ def main(need_download=False):
     # model_name = "Xception"
     base_model_only = False
 
-    data_info = data_loader.DatasetInfo(img_size=img_size_map[model_name])
+    data_info = data_loader.DatasetInfo(img_size=img_size_map[model_name], data_type=data_type)
     dataset = data_loader.Dataset(data_info)
 
-    model_info = keras_model.ModelInfo(model_name, base_model_only=base_model_only, model_name="pokemon_model",
+    model_info = keras_model.ModelInfo(model_name, base_model_only=base_model_only, model_name=data_type,
                                        class_names=dataset.class_names, version=model_name + "_1.0",
                                        data_info=data_info)
     model = custom_model.CNNWithDense(model_info)

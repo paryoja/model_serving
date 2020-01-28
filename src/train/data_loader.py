@@ -33,14 +33,16 @@ def process_path(file_path, class_names, img_size):
 
 
 class DatasetInfo:
-    def __init__(self, img_size):
+    def __init__(self, data_type, img_size):
+        self.data_type = data_type
         self.img_size = img_size
 
 
 class Dataset:
     def __init__(self, dataset_info):
-        data_dir = pathlib.Path('data/train')
-        val_dir = pathlib.Path('data/validate/')
+        data_dir = pathlib.Path('data/{}/train/'.format(dataset_info.data_type))
+        val_dir = pathlib.Path('data/{}/validate/'.format(dataset_info.data_type))
+
         self.class_names = np.array([item.name for item in data_dir.glob('*') if item.name != "LICENSE.txt"])
 
         list_ds = tf.data.Dataset.list_files(str(data_dir / '*/*'))
