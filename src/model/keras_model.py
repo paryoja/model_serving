@@ -247,7 +247,10 @@ class DeepModel:
         prob_list = []
         for prob in predictions[0]:
             prob_list.append(prob.astype(float))
-        return prob_list, label, version
+        class_names = {}
+        for idx, class_name in enumerate(self.model_info.class_names):
+            class_names[class_name.astype(str)] = idx
+        return prob_list, label, version, class_names
 
     def save(self):
         with open(self.model_info.model_dir / "model.json", "w") as json_file:

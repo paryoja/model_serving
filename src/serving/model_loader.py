@@ -43,13 +43,14 @@ class ServingModel:
         deep_model = self.deep_model_map[model_name]
         img = tf.io.read_file(filepath)
         img = data_loader.decode_img(img, deep_model["model_info"].data_info.img_size)
-        classification, label, version = deep_model["deep_model"].predict(img)
+        classification, label, version, class_names = deep_model["deep_model"].predict(img)
 
         result = {
             'status': 'success',
             'classification': classification,
             'label': label,
             'version': version,
+            'class_names': class_names,
         }
         return result
 

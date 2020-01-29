@@ -1,3 +1,4 @@
 {
-  "pokemon_model": "models/pokemon_model/1.0/2020_01_28_17_50_53/model.137-1.11.hdf5"
+  "pokemon_model": "models/pokemon_yes_no/VGG16_1.0/2020_01_28_21_35_10/model.003-0.99.hdf5",
+  "people_model": "models/people/VGG16_1.0/2020_01_28_22_18_43/model.005-0.43.hdf5"
 }

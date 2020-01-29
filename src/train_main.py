@@ -38,9 +38,9 @@ def main(need_download=False):
         # data_downloader.validate_image(data_type)
 
     # load data
-    model_name = "VGG16"
+    # model_name = "VGG16"
     # model_name = "MobileNetV2"
-    # model_name = "Xception"
+    model_name = "Xception"
     base_model_only = False
 
     data_info = data_loader.DatasetInfo(img_size=img_size_map[model_name], data_type=data_type)
