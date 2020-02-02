@@ -7,7 +7,7 @@ import requests
 import tensorflow as tf
 from tensorflow.keras.models import model_from_json
 
-from model import keras_model
+from model import keras_model, model_info
 from train import data_loader
 
 
@@ -40,13 +40,24 @@ class ServingModel:
         return filepath
 
     def predict(self, filepath, model_name):
-        deep_model = self.deep_model_map[model_name]
-        img = tf.io.read_file(filepath)
-        img = data_loader.decode_img(img, deep_model["model_info"].data_info.img_size)
-        classification, label, version, class_names = deep_model["deep_model"].predict(img)
+        try:
+            deep_model = self.deep_model_map[model_name]
+            img = tf.io.read_file(filepath)
+            img = data_loader.decode_img(img, deep_model["model_info"].img_size)
+            classification, label, version, class_names = deep_model["deep_model"].predict(img)
+            status = 'success'
+        except Exception as e:
+            status = 'error'
+            classification = ''
+            label = str(e)
+            version = deep_model["deep_model"].model_info.version
+
+            class_names = {}
+            for idx, class_name in enumerate(deep_model["deep_model"].model_info.class_names):
+                class_names[class_name.astype(str)] = idx
 
         result = {
-            'status': 'success',
+            'status': status,
             'classification': classification,
             'label': label,
             'version': version,
@@ -68,9 +79,9 @@ def load_model(base_path):
         loaded_model.load_weights(base_path + "/" + v)
 
         model_info_json = model_path.parents[0] / 'model_info.json'
-        model_info = keras_model.ModelInfo.load(str(model_info_json))
+        info = model_info.ModelInfo.load(str(model_info_json))
 
-        deep_model = keras_model.LoadedModel(model_info, loaded_model)
-        deep_model_map[k] = {'deep_model': deep_model, 'model_info': model_info}
+        deep_model = keras_model.LoadedModel(info, loaded_model)
+        deep_model_map[k] = {'deep_model': deep_model, 'model_info': info}
     print(deep_model_map)
     return ServingModel(deep_model_map)

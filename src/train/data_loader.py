@@ -60,5 +60,10 @@ class Dataset:
         self.train_ds = list_ds.map(process_path_partial, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         self.val_ds = val_list_ds.map(process_path_partial, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
+        # import matplotlib.pyplot as plt
+        # for img in self.train_ds:
+        #     plt.imshow(img[0])
+        #     break
+
     def get_raw_data(self):
         return self.train_ds, self.val_ds

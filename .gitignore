@@ -13,3 +13,4 @@ result.txt
 zip.txt
 blacklist.json
 *.png
+venv/
