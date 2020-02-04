@@ -54,7 +54,7 @@ class ModelInfo:
                 "class_names": [name for name in self.class_names],
                 "version": self.version,
                 "data_info.img_size": self.data_info.img_size,
-                "data_info.data_type": self.data_info.data_type,
+                "data_info.data_type.data_str": self.data_info.data_type.data_str,
                 "img_size": self.img_size,
             }
             json.dump(contents, w)
@@ -64,8 +64,9 @@ class ModelInfo:
         with open(filepath) as f:
             contents = json.load(f)
 
+        data_type = data_loader.DataType(data_str=contents["data_info.data_type.data_str"])
         data_info = data_loader.DatasetInfo(img_size=contents["data_info.img_size"],
-                                            data_type=contents["data_info.data_type"])
+                                            data_type=data_type)
         model_info = ModelInfo(base_model_name=contents["base_model_name"],
                                base_model_only=contents["base_model_only"],
                                model_name=contents["model_name"],

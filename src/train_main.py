@@ -28,25 +28,6 @@ class ModelType:
         return self.img_size_map[self.model_str]
 
 
-class DataType:
-    PokemonYesNo = "pokemon_yes_no"
-    People = "People"
-
-    def __init__(self, data_str):
-        self.data_str = data_str
-
-    def download(self, session):
-        if self.data_str == DataType.PokemonYesNo:
-            data_downloader.download_pokemon(session, label="yes")
-            data_downloader.download_pokemon(session, label="no")
-            data_downloader.download_pokemon(session, label="more")
-            data_downloader.download_pokemon(session, label="little")
-            data_downloader.validate_image(self.data_str)
-        elif self.data_str == DataType.People:
-            data_downloader.download_people(session, label="True")
-            data_downloader.download_people(session, label="False")
-
-
 def main(need_download=False):
     from train import data_loader
     from model import keras_model
@@ -57,7 +38,7 @@ def main(need_download=False):
     import matplotlib.pyplot as plt
     plt.interactive(False)
 
-    data_type = DataType(DataType.PokemonYesNo)
+    data_type = data_loader.DataType(data_loader.DataType.PokemonYesNo)
 
     # 다운 시작
     if need_download:
@@ -73,9 +54,10 @@ def main(need_download=False):
     data_info = data_loader.DatasetInfo(img_size=model_type.img_size, data_type=data_type)
     dataset = data_loader.Dataset(data_info)
 
-    model_info = model_info.ModelInfo(model_type.model_str, base_model_only=base_model_only, model_name=data_type,
-                                      class_names=dataset.class_names, version=model_type.model_str + "_1.0",
-                                      data_info=data_info, img_size=model_type.img_size)
+    model_info = model_info.ModelInfo(model_type.model_str, base_model_only=base_model_only,
+                                      model_name=data_type.data_str, class_names=dataset.class_names,
+                                      version=model_type.model_str + "_1.0", data_info=data_info,
+                                      img_size=model_type.img_size)
     model = custom_model.CNNWithDense(model_info)
 
     # model.train(dataset, update_base=True)
@@ -108,4 +90,4 @@ def main(need_download=False):
 
 
 if __name__ == "__main__":
-    main(True)
+    main(False)
