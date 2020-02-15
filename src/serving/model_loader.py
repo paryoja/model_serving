@@ -65,6 +65,10 @@ class ServingModel:
         }
         return result
 
+    def predict_batch(self, images, model_name="people_model"):
+        deep_model = self.deep_model_map[model_name]
+        return deep_model["deep_model"].model.predict(images)
+
 
 def load_model(base_path):
     with open(base_path + "/model_info.json") as f:

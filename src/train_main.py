@@ -1,8 +1,8 @@
 import os
 
-from train import data_downloader
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+from train import data_downloader
 
 
 class ModelType:
@@ -29,16 +29,24 @@ class ModelType:
 
 
 def main(need_download=False):
-    from train import data_loader
     from model import keras_model
     from model import custom_model
     from model import model_info
     from plot import show_single_image
+    from train import data_loader
 
     import matplotlib.pyplot as plt
     plt.interactive(False)
 
-    data_type = data_loader.DataType(data_loader.DataType.PokemonYesNo)
+    # gpus = tf.config.experimental.list_physical_devices('GPU')
+    # if gpus:
+    #     try:
+    #         tf.config.experimental.set_memory_growth(gpus[0], True)
+    #     except RuntimeError as e:
+    #         # 프로그램 시작시에 메모리 증가가 설정되어야만 합니다
+    #         print(e)
+
+    data_type = data_loader.DataType(data_loader.DataType.People)
 
     # 다운 시작
     if need_download:
@@ -62,18 +70,21 @@ def main(need_download=False):
 
     # model.train(dataset, update_base=True)
     if train_model:
-        raw, _ = dataset.get_raw_data()
-        print(id(raw))
-        for img, label in raw:
-            plt.figure()
-            plt.imshow(img)
-            plt.title('start')
-            plt.show()
-            break
-
         train_info = keras_model.TrainInfo(learning_rate=1e-5, momentum=0.9, update_base=False, warmup_batches=15,
-                                           epochs=30)
+                                           epochs=1)
         model.train_model(dataset, train_info)
+
+        # CHECK which file is not trained
+        data_loader.confusing_data(model, data_info)
+
+        untrained_data_info = data_loader.DatasetInfo(img_size=model_type.img_size, data_type=data_type)
+        untrained_dataset = data_loader.Dataset(untrained_data_info, from_untrained_file=True)
+        train_info = keras_model.TrainInfo(learning_rate=1e-5, momentum=0.9, update_base=False, warmup_batches=15,
+                                           epochs=1)
+        model.train_model(untrained_dataset, train_info)
+
+        # CHECK which file is not trained
+        data_loader.confusing_data(model, data_info)
 
         train_info = keras_model.TrainInfo(learning_rate=1e-6, momentum=0.9, update_base=True, warmup_batches=15,
                                            epochs=30)
@@ -90,4 +101,4 @@ def main(need_download=False):
 
 
 if __name__ == "__main__":
-    main(False)
+    main(True)

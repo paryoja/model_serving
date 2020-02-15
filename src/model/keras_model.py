@@ -23,6 +23,16 @@ class TrainInfo:
         self.epochs = epochs
 
 
+def plot_5by5(raw_train, class_names):
+    plt.figure(figsize=(10, 10))
+    for (image, label), i in zip(raw_train, range(25)):
+        plt.subplot(5, 5, i + 1)
+        plt.title(class_names[tf.argmax(tf.cast(label, tf.int32))])
+        plt.imshow(image)
+        plt.axis('off')
+    plt.show()
+
+
 def print_min_max(image):
     print("min", tf.math.reduce_min(image))
     print("max", tf.math.reduce_max(image))
@@ -56,58 +66,25 @@ class DeepModel:
         return [cb_lrate, cb_tb_hist, cb_checkpoint, warm_up_lr]
 
     def train_model(self, dataset, train_info: TrainInfo):
+        print("Starting Train")
         raw_train, raw_val = dataset.get_raw_data()
 
-        for image, label in raw_train:
-            print("Min, Max for raw train")
-            print_min_max(image)
-            plt.figure()
-            plt.title(str(label))
-            plt.imshow(image)
-            plt.show()
-            break
+        raw_train = raw_train.cache()
+        raw_val = raw_val.cache()
 
-        for image in raw_val.take(1):
-            print("Min, Max for raw val")
-            print_min_max(image[0])
-
+        plot_5by5(raw_train, self.model_info.class_names)
         train = augment_util.get_augmented_dataset(raw_train, self.model_info)
-
-        for image, label in train:
-            print_min_max(image)
-            plt.figure()
-            plt.title(str(label))
-            plt.imshow(image)
-            plt.show()
-            break
 
         train = train.map(self.model_info.format_fn)
         val = raw_val.map(self.model_info.format_fn)
-
-        for image in train.take(1):
-            print("Min, Max for raw train after format_fn")
-            print_min_max(image[0])
 
         self.model_info.base_model.trainable = train_info.update_base
 
         # 일단 여기서 cache 해본다 -> 메모리 부족시 앞에서 해본다
         train_batches = train.shuffle(train_info.shuffle_buffer_size).prefetch(10000)
 
-        for image, label in train_batches.take(1):
-            print("Min, Max for train batches")
-            print(tf.shape(image))
-            print(tf.shape(label))
-
         train_batches = train_batches.batch(train_info.batch_size)
         val_batches = val.cache().batch(train_info.batch_size)
-
-        for image in train_batches.take(1):
-            print("Min, Max for train batches")
-            print_min_max(image[0])
-
-        for image in val_batches.take(1):
-            print("Min, Max for val batches")
-            print_min_max(image[0])
 
         self.model.compile(
             optimizer=keras.optimizers.RMSprop(lr=train_info.learning_rate, momentum=train_info.momentum),
@@ -172,6 +149,9 @@ class DeepModel:
         for idx, class_name in enumerate(self.model_info.class_names):
             class_names[class_name.astype(str)] = idx
         return prob_list, label, version, class_names
+
+    def predict_batch(self, images):
+        return self.model.predict(images)
 
     def save(self):
         with open(self.model_info.model_dir / "model.json", "w") as json_file:

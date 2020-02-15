@@ -1,4 +1,4 @@
 {
-  "people_model": "models/people/NASNetMobile_1.0/2020_02_01_00_49_40/model.017-0.90.hdf5",
+  "people_model": "models/People/NASNetMobile_1.0/2020_02_15_00_11_41/model.005-0.65.hdf5",
   "pokemon_yes_no": "models/pokemon_yes_no/NASNetMobile_1.0/2020_02_01_23_27_04/model.062-1.42.hdf5"
 }
