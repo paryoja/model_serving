@@ -14,3 +14,7 @@ zip.txt
 blacklist.json
 *.png
 venv/
+image.txt
+more_train.txt
+revised.txt
+.idea/deployment.xml

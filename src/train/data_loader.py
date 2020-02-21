@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 
 from train import data_downloader
+from utils.model_logger import logger
 
 
 def get_label(file_path, class_names):
@@ -25,6 +26,13 @@ def decode_img(img, img_size):
     img = tf.image.convert_image_dtype(img, tf.float32)
     # resize the image to the desired size.
     return tf.image.resize(img, [img_size, img_size])
+
+
+def debug_path(file_path, class_names):
+    label = get_label(file_path, class_names)
+    img = tf.io.read_file(file_path)
+
+    return label, file_path
 
 
 def process_path(file_path, class_names, img_size, keep_path):
@@ -47,15 +55,32 @@ class DataType:
         self.data_str = data_str
 
     def download(self, session):
+        file_type = self.load_file_type()
         if self.data_str == DataType.PokemonYesNo:
-            data_downloader.download_pokemon(session, label="yes")
-            data_downloader.download_pokemon(session, label="no")
-            data_downloader.download_pokemon(session, label="more")
-            data_downloader.download_pokemon(session, label="little")
+            data_downloader.download_pokemon(session, file_type, label="yes")
+            data_downloader.download_pokemon(session, file_type, label="no")
+            data_downloader.download_pokemon(session, file_type, label="more")
+            data_downloader.download_pokemon(session, file_type, label="little")
             data_downloader.validate_image(self.data_str)
         elif self.data_str == DataType.People:
-            data_downloader.download_people(session, label="True")
-            data_downloader.download_people(session, label="False")
+            data_downloader.download_people(session, file_type, label="True")
+            data_downloader.download_people(session, file_type, label="False")
+
+    def load_file_type(self):
+        file_type = {}
+        if self.data_str == DataType.People:
+            glob = pathlib.Path('data/people').glob("**/*.jpg")
+
+            for file in glob:
+                if file.name in file_type:
+                    logger.warning("Duplicated filename {} deleting it".format(file.name))
+                    logger.warning("Unlink {} and {}".format(file, file_type[file.name][1]))
+                    file.unlink()
+                    file_type[file.name][1].unlink()
+                    del file_type[file.name]
+                    continue
+                file_type[file.name] = (file.parts[-2], file)
+        return file_type
 
 
 def confusing_data(model, data_info):
@@ -73,12 +98,15 @@ def confusing_data(model, data_info):
             if prob < threshold:
                 need_to_train_path.append(path)
 
+    logger.info("Finished classifying train data : Total {}".format(len(need_to_train_path)))
     with open("more_train.txt", "w") as w:
         for path in need_to_train_path:
             w.write(path.numpy().decode('utf-8'))
             w.write("\n")
-    print("elapsed time", time.time() - start_time)
-    print("train count", len(need_to_train_path))
+    logger.info("elapsed time", time.time() - start_time)
+    logger.info("train count", len(need_to_train_path))
+
+    return need_to_train_path
 
 
 class DatasetInfo:
@@ -97,26 +125,32 @@ class Dataset:
             need_to_train_path = []
             with open("more_train.txt") as f:
                 for line in f:
-                    need_to_train_path.append(line)
+                    need_to_train_path.append(line.strip())
             list_ds = tf.data.Dataset.from_tensor_slices(need_to_train_path)
+
             self.data_count = len(need_to_train_path)
         else:
             data_dir = pathlib.Path('data/{}/train/'.format(dataset_info.data_type.data_str))
-            self.data_count = len(list(data_dir.glob('**/*')))
+
             list_ds = tf.data.Dataset.list_files(str(data_dir / '*/*'))
+            self.data_count = len(list(data_dir.glob('**/*')))
 
         val_dir = pathlib.Path('data/{}/validate/'.format(dataset_info.data_type.data_str))
         val_list_ds = tf.data.Dataset.list_files(str(val_dir / '*/*'))
 
         self.class_names = np.array([item.name for item in val_dir.glob('*') if item.name != "LICENSE.txt"])
+        logger.debug("Class names {}".format(self.class_names))
         self.validate_count = len(list(val_dir.glob('**/*')))
 
-        print("Data count ", self.data_count, ", Validate count ", self.validate_count)
+        logger.info("Data count {}, Validate count {}".format(self.data_count, self.validate_count))
+        debug = False
+        if not debug:
+            process_path_partial = functools.partial(process_path, class_names=self.class_names,
+                                                     img_size=dataset_info.img_size, keep_path=keep_path)
 
-        process_path_partial = functools.partial(process_path, class_names=self.class_names,
-                                                 img_size=dataset_info.img_size, keep_path=keep_path)
+        else:
+            process_path_partial = functools.partial(debug_path, class_names=self.class_names)
 
-        # Set `num_parallel_calls` so multiple images are loaded/processed in parallel.
         self.train_ds = list_ds.map(process_path_partial, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         self.val_ds = val_list_ds.map(process_path_partial, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 

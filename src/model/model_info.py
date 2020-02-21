@@ -20,7 +20,7 @@ def simple_label(prediction, class_names):
 
 class ModelInfo:
     def __init__(self, base_model_name, base_model_only, model_name, class_names, version, data_info, img_size,
-                 create_dir=True):
+                 create_dir=True, load_model=False, load_model_path=None):
         """
            :param base_model_name: Pre-trained 된 모델 이름
            :param base_model_only: base model 자체만 사용하는 경우 - Imagenet classification 자체로
@@ -36,6 +36,8 @@ class ModelInfo:
         self.version = version
         self.data_info = data_info
         self.img_size = img_size
+        self.load_model = load_model
+        self.load_model_path = load_model_path
 
         self.base_model = self.get_base_model(base_model_name, base_model_only, data_info)
         self.format_fn = self.get_format_fn(self.base_model_name)

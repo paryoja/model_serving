@@ -9,6 +9,7 @@ from tensorflow.keras.models import model_from_json
 from model import model_info as model_info_file
 from train import augment_util
 from train import train_util
+from utils.model_logger import logger
 
 
 class TrainInfo:
@@ -47,9 +48,15 @@ class DeepModel:
             self.model = self.make_model(*args)
         else:
             self.model = self.model_info.base_model
+        self.load_model()
 
     def make_model(self, *args):
         raise NotImplementedError()
+
+    def load_model(self):
+        if self.model_info.load_model:
+            logger.debug("Loading model from {}".format(self.model_info.load_model_path))
+            self.model.load_weights(self.model_info.load_model_path)
 
     def make_callbacks(self, train_info: TrainInfo):
         cb_lrate = keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=20, verbose=1,
@@ -66,7 +73,7 @@ class DeepModel:
         return [cb_lrate, cb_tb_hist, cb_checkpoint, warm_up_lr]
 
     def train_model(self, dataset, train_info: TrainInfo):
-        print("Starting Train")
+        logger.info("Starting Train")
         raw_train, raw_val = dataset.get_raw_data()
 
         raw_train = raw_train.cache()
@@ -81,15 +88,17 @@ class DeepModel:
         self.model_info.base_model.trainable = train_info.update_base
 
         # 일단 여기서 cache 해본다 -> 메모리 부족시 앞에서 해본다
+        logger.info("Shuffle batches")
         train_batches = train.shuffle(train_info.shuffle_buffer_size).prefetch(10000)
-
         train_batches = train_batches.batch(train_info.batch_size)
         val_batches = val.cache().batch(train_info.batch_size)
 
+        print("Compile model")
         self.model.compile(
             optimizer=keras.optimizers.RMSprop(lr=train_info.learning_rate, momentum=train_info.momentum),
             loss="categorical_crossentropy",
             metrics=['accuracy'])
+
         self.save()
         self.model.summary()
 
@@ -101,6 +110,7 @@ class DeepModel:
 
         callbacks = self.make_callbacks(train_info)
 
+        logger.info("Model Fit Started")
         try:
             history = self.model.fit(train_batches,
                                      epochs=initial_epochs,

@@ -61,27 +61,31 @@ def main(need_download=False):
 
     data_info = data_loader.DatasetInfo(img_size=model_type.img_size, data_type=data_type)
     dataset = data_loader.Dataset(data_info)
-
+    
     model_info = model_info.ModelInfo(model_type.model_str, base_model_only=base_model_only,
                                       model_name=data_type.data_str, class_names=dataset.class_names,
                                       version=model_type.model_str + "_1.0", data_info=data_info,
-                                      img_size=model_type.img_size)
+                                      img_size=model_type.img_size, load_model=True,
+                                      load_model_path="models/People/NASNetMobile_1.0/2020_02_15_00_11_41/model.005-0.65.hdf5")
+    # model_info = model_info.ModelInfo(model_type.model_str, base_model_only=base_model_only,
+    #                                   model_name=data_type.data_str, class_names=dataset.class_names,
+    #                                   version=model_type.model_str + "_1.0", data_info=data_info,
+    #                                   img_size=model_type.img_size)
     model = custom_model.CNNWithDense(model_info)
 
+    # data_loader.confusing_data(model, data_info)
     # model.train(dataset, update_base=True)
     if train_model:
-        train_info = keras_model.TrainInfo(learning_rate=1e-5, momentum=0.9, update_base=False, warmup_batches=15,
-                                           epochs=1)
-        model.train_model(dataset, train_info)
-
         # CHECK which file is not trained
-        data_loader.confusing_data(model, data_info)
+        untrained_dataset = data_loader.Dataset(data_info, from_untrained_file=True)
 
-        untrained_data_info = data_loader.DatasetInfo(img_size=model_type.img_size, data_type=data_type)
-        untrained_dataset = data_loader.Dataset(untrained_data_info, from_untrained_file=True)
         train_info = keras_model.TrainInfo(learning_rate=1e-5, momentum=0.9, update_base=False, warmup_batches=15,
                                            epochs=1)
         model.train_model(untrained_dataset, train_info)
+
+        # train_info = keras_model.TrainInfo(learning_rate=1e-5, momentum=0.9, update_base=False, warmup_batches=15,
+        #                                    epochs=1)
+        # model.train_model(untrained_dataset, train_info)
 
         # CHECK which file is not trained
         data_loader.confusing_data(model, data_info)
