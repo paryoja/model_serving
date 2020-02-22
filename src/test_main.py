@@ -22,6 +22,7 @@ def main(need_download=False):
     model = model_loader.load_model(base_path)
 
     data_info = data_loader.DatasetInfo(img_size=model_type.img_size, data_type=data_type)
+    data_loader.validation(data_info)
 
     data_loader.confusing_data(model, data_info)
 

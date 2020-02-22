@@ -5,6 +5,7 @@ import time
 
 import numpy as np
 import tensorflow as tf
+import tqdm
 
 from train import data_downloader
 from utils.model_logger import logger
@@ -83,13 +84,29 @@ class DataType:
         return file_type
 
 
-def confusing_data(model, data_info):
+def validation(data_info):
+    data_dir = pathlib.Path('data/{}/train/'.format(data_info.data_type.data_str))
+    list_ds = tf.data.Dataset.list_files(str(data_dir / '*/*'))
+    class_name = np.array([item.name for item in data_dir.glob('*') if item.name != "LICENSE.txt"])
+    for path in list_ds:
+        print(path)
+        (img, path), label = process_path(path, class_names=class_name, img_size=512, keep_path=True)
+        print(path, label)
+
+
+def confusing_data(model, data_info, validate=False):
+    logger.info("Finding confusing data")
     start_time = time.time()
     dataset = Dataset(data_info, keep_path=True)
-    train_ds = dataset.train_ds.prefetch(100000)
+
+    if validate:
+        ds = dataset.val_ds.prefetch(10000)
+    else:
+        ds = dataset.train_ds.prefetch(10000)
     need_to_train_path = []
     threshold = 0.8
-    for images_path, label in train_ds.batch(500):
+
+    for images_path, label in tqdm.tqdm(ds.batch(256)):
         predict = model.predict_batch(images_path[0])
 
         for lab, p, path in zip(label, predict, images_path[1]):
@@ -99,12 +116,12 @@ def confusing_data(model, data_info):
                 need_to_train_path.append(path)
 
     logger.info("Finished classifying train data : Total {}".format(len(need_to_train_path)))
-    with open("more_train.txt", "w") as w:
+    with open("more_train_{}.txt".format(validate), "w") as w:
         for path in need_to_train_path:
             w.write(path.numpy().decode('utf-8'))
             w.write("\n")
-    logger.info("elapsed time", time.time() - start_time)
-    logger.info("train count", len(need_to_train_path))
+    logger.info("elapsed time {}".format(time.time() - start_time))
+    logger.info("train count {}".format(len(need_to_train_path)))
 
     return need_to_train_path
 
@@ -123,7 +140,7 @@ class Dataset:
 
         if from_untrained_file:
             need_to_train_path = []
-            with open("more_train.txt") as f:
+            with open("more_train_False.txt") as f:
                 for line in f:
                     need_to_train_path.append(line.strip())
             list_ds = tf.data.Dataset.from_tensor_slices(need_to_train_path)

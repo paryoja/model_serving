@@ -15,6 +15,6 @@ blacklist.json
 *.png
 venv/
 image.txt
-more_train.txt
+more_train_False.txt
 revised.txt
 .idea/deployment.xml
