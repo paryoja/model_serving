@@ -42,7 +42,10 @@ def save_image(url, directory, filename, file_type):
             if label != new_label:
                 prev_path = directory_path.parents[0] / label / filename
                 logger.debug("Move from {} to {}".format(prev_path, file_path))
-                shutil.move(prev_path, file_path)
+                try:
+                    shutil.move(prev_path, file_path)
+                except:
+                    pass
                 return
 
     if file_path.exists():
@@ -149,7 +152,7 @@ def download(url, session, label="True", data_type="pokemon_yes_no", file_type=N
         black_list = set(black_list)
 
     parse_function = functools.partial(parse, data_type=data_type, black_list=black_list, file_type=file_type)
-    with multiprocessing.Pool(10) as pool:
+    with multiprocessing.Pool(5) as pool:
         while True:
             request_url = url + label + "/" + str(page)
             results = session.get(url + label + "/" + str(page))

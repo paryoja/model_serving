@@ -66,6 +66,7 @@ class DataType:
         elif self.data_str == DataType.People:
             data_downloader.download_people(session, file_type, label="True")
             data_downloader.download_people(session, file_type, label="False")
+            data_downloader.validate_image(self.data_str)
 
     def load_file_type(self):
         file_type = {}
