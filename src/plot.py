@@ -14,7 +14,7 @@ def show_single_image(img, title, recover_func=None):
     else:
         plt.imshow(img[0])
     # plt.title(class_names[label_batch[n] == True][0].title())
-    plt.axis('off')
+    plt.axis("off")
 
     plt.show()
 
@@ -34,6 +34,6 @@ def show_images(image_batch, title="Train", recover_func=None):
         else:
             plt.imshow(img[0])
         # plt.title(class_names[label_batch[n] == True][0].title())
-        plt.axis('off')
+        plt.axis("off")
         n += 1
     plt.show()

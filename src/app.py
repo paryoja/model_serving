@@ -7,14 +7,14 @@ from flask import request
 
 from serving import model_loader
 
-gpus = tf.config.experimental.list_physical_devices('GPU')
+gpus = tf.config.experimental.list_physical_devices("GPU")
 if gpus:
     try:
         tf.config.experimental.set_memory_growth(gpus[0], True)
     except RuntimeError as e:
         # 프로그램 시작시에 메모리 증가가 설정되어야만 합니다
         print(e)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 app = Flask(__name__)
 
@@ -23,12 +23,12 @@ print(base_path)
 model = model_loader.load_model(base_path)
 
 
-@app.route('/')
+@app.route("/")
 def index():
-    return 'Hello Flask'
+    return "Hello Flask"
 
 
-@app.route('/pokemon_classification', methods=['POST'])
+@app.route("/pokemon_classification", methods=["POST"])
 def pokemon_classification():
     # requested_url 으로 전달된 url 이미지를 다운 받고 분석
     json_request = request.json
@@ -40,7 +40,7 @@ def pokemon_classification():
     return json.dumps(result), 200
 
 
-@app.route('/people_classification', methods=['POST'])
+@app.route("/people_classification", methods=["POST"])
 def people_classification():
     # requested_url 으로 전달된 url 이미지를 다운 받고 분석
     json_request = request.json

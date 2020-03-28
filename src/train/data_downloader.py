@@ -22,9 +22,14 @@ def get_session():
 
     s = requests.Session()
     r = s.get("http://13.125.1.208/book/login/?next=/book")
-    s.post("http://13.125.1.208/book/login/?next=/book",
-           data={"password": password, "username": username,
-                 "csrfmiddlewaretoken": r.cookies.get("csrftoken")})
+    s.post(
+        "http://13.125.1.208/book/login/?next=/book",
+        data={
+            "password": password,
+            "username": username,
+            "csrfmiddlewaretoken": r.cookies.get("csrftoken"),
+        },
+    )
     return s
 
 
@@ -58,28 +63,28 @@ def save_image(url, directory, filename, file_type):
         return
 
     if r.status_code == 200:
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             r.raw.decode_content = True
             shutil.copyfileobj(r.raw, f)
 
 
 def parse(data, data_type="pokemon_yes_no", black_list=None, file_type=None):
-    url = data['fields']['url']
-    filename = url.split('/')[-1]
+    url = data["fields"]["url"]
+    filename = url.split("/")[-1]
 
-    url_hash = int(hashlib.sha1(url.encode('utf-8')).hexdigest(), 16) % 100
+    url_hash = int(hashlib.sha1(url.encode("utf-8")).hexdigest(), 16) % 100
 
     if data_type == "pokemon_yes_no":
-        label = data['fields']['classified']
+        label = data["fields"]["classified"]
     elif data_type == "pokemon_classification":
-        label = data['fields']['original_label']
+        label = data["fields"]["original_label"]
     else:
-        label = data['fields']['selected']
+        label = data["fields"]["selected"]
 
     if url_hash < 90:
-        target_path = 'data/{}/train/{}'.format(data_type, label)
+        target_path = "data/{}/train/{}".format(data_type, label)
     else:
-        target_path = 'data/{}/validate/{}'.format(data_type, label)
+        target_path = "data/{}/validate/{}".format(data_type, label)
 
     if black_list and target_path + "/" + filename in black_list:
         print("Skipping {} since it is listed in blacklist".format(url))
@@ -90,8 +95,8 @@ def parse(data, data_type="pokemon_yes_no", black_list=None, file_type=None):
 
 def validate_image(data_type="pokemon_yes_no"):
     print("Validate Images")
-    if pathlib.Path('blacklist.json').exists():
-        with open('blacklist.json', 'r') as f:
+    if pathlib.Path("blacklist.json").exists():
+        with open("blacklist.json", "r") as f:
             ignore_list = json.load(f)
     else:
         ignore_list = []
@@ -128,17 +133,27 @@ def validate_image(data_type="pokemon_yes_no"):
                     if normalized_str_file_path not in ignore_list:
                         ignore_list.append(normalized_str_file_path)
 
-    with open('blacklist.json', 'w') as w:
+    with open("blacklist.json", "w") as w:
         w.write(json.dumps(ignore_list))
 
 
 def download_pokemon(session, file_type, label="yes"):
-    download(url="http://13.125.1.208/book/pokemon_export/", file_type=file_type, label=label, session=session)
+    download(
+        url="http://13.125.1.208/book/pokemon_export/",
+        file_type=file_type,
+        label=label,
+        session=session,
+    )
 
 
 def download_people(session, file_type, label="True"):
-    download(url="http://13.125.1.208/book/people_result/download/", file_type=file_type, label=label,
-             data_type="people", session=session)
+    download(
+        url="http://13.125.1.208/book/people_result/download/",
+        file_type=file_type,
+        label=label,
+        data_type="people",
+        session=session,
+    )
 
 
 def download(url, session, label="True", data_type="pokemon_yes_no", file_type=None):
@@ -151,7 +166,9 @@ def download(url, session, label="True", data_type="pokemon_yes_no", file_type=N
             black_list = json.load(f)
         black_list = set(black_list)
 
-    parse_function = functools.partial(parse, data_type=data_type, black_list=black_list, file_type=file_type)
+    parse_function = functools.partial(
+        parse, data_type=data_type, black_list=black_list, file_type=file_type
+    )
     with multiprocessing.Pool(5) as pool:
         while True:
             request_url = url + label + "/" + str(page)
@@ -162,11 +179,11 @@ def download(url, session, label="True", data_type="pokemon_yes_no", file_type=N
 
             decompressed = lz4.frame.decompress(pickled)
 
-            with open('./zip.txt', 'w') as w:
+            with open("./zip.txt", "w") as w:
                 w.write(results.text)
 
-            data = decompressed.decode('utf-8')
-            with open('./result.txt', 'w') as w:
+            data = decompressed.decode("utf-8")
+            with open("./result.txt", "w") as w:
                 w.write(data)
 
             data_json = json.loads(data)

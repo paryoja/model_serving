@@ -15,12 +15,23 @@ def format_example(image, label):
 
 
 def simple_label(prediction, class_names):
-    return class_names[np.argmax(prediction).astype('int32')]
+    return class_names[np.argmax(prediction).astype("int32")]
 
 
 class ModelInfo:
-    def __init__(self, base_model_name, base_model_only, model_name, class_names, version, data_info, img_size,
-                 create_dir=True, load_model=False, load_model_path=None):
+    def __init__(
+        self,
+        base_model_name,
+        base_model_only,
+        model_name,
+        class_names,
+        version,
+        data_info,
+        img_size,
+        create_dir=True,
+        load_model=False,
+        load_model_path=None,
+    ):
         """
            :param base_model_name: Pre-trained 된 모델 이름
            :param base_model_only: base model 자체만 사용하는 경우 - Imagenet classification 자체로
@@ -39,7 +50,9 @@ class ModelInfo:
         self.load_model = load_model
         self.load_model_path = load_model_path
 
-        self.base_model = self.get_base_model(base_model_name, base_model_only, data_info)
+        self.base_model = self.get_base_model(
+            base_model_name, base_model_only, data_info
+        )
         self.format_fn = self.get_format_fn(self.base_model_name)
         self.label_fn = self.get_label_fn()
 
@@ -48,7 +61,7 @@ class ModelInfo:
             self.save()
 
     def save(self):
-        with open(self.model_dir / 'model_info.json', 'w') as w:
+        with open(self.model_dir / "model_info.json", "w") as w:
             contents = {
                 "base_model_name": self.base_model_name,
                 "base_model_only": self.base_model_only,
@@ -66,17 +79,22 @@ class ModelInfo:
         with open(filepath) as f:
             contents = json.load(f)
 
-        data_type = data_loader.DataType(data_str=contents["data_info.data_type.data_str"])
-        data_info = data_loader.DatasetInfo(img_size=contents["data_info.img_size"],
-                                            data_type=data_type)
-        model_info = ModelInfo(base_model_name=contents["base_model_name"],
-                               base_model_only=contents["base_model_only"],
-                               model_name=contents["model_name"],
-                               class_names=np.array(contents["class_names"]),
-                               version=contents["version"],
-                               data_info=data_info,
-                               img_size=contents["img_size"],
-                               create_dir=False)
+        data_type = data_loader.DataType(
+            data_str=contents["data_info.data_type.data_str"]
+        )
+        data_info = data_loader.DatasetInfo(
+            img_size=contents["data_info.img_size"], data_type=data_type
+        )
+        model_info = ModelInfo(
+            base_model_name=contents["base_model_name"],
+            base_model_only=contents["base_model_only"],
+            model_name=contents["model_name"],
+            class_names=np.array(contents["class_names"]),
+            version=contents["version"],
+            data_info=data_info,
+            img_size=contents["img_size"],
+            create_dir=False,
+        )
         return model_info
 
     @staticmethod
@@ -91,37 +109,41 @@ class ModelInfo:
     def get_base_model(base_model_name, base_model_only, data_info):
         img_shape = (data_info.img_size, data_info.img_size, 3)
         if base_model_name == "VGG16":
-            base_model = keras.applications.VGG16(input_shape=img_shape,
-                                                  include_top=base_model_only,
-                                                  weights='imagenet')
+            base_model = keras.applications.VGG16(
+                input_shape=img_shape, include_top=base_model_only, weights="imagenet"
+            )
 
         elif base_model_name == "MobileNetV2":
-            base_model = keras.applications.MobileNetV2(input_shape=img_shape,
-                                                        include_top=base_model_only,
-                                                        weights='imagenet')
+            base_model = keras.applications.MobileNetV2(
+                input_shape=img_shape, include_top=base_model_only, weights="imagenet"
+            )
 
         elif base_model_name == "Xception":
-            base_model = keras.applications.Xception(input_shape=img_shape,
-                                                     include_top=base_model_only,
-                                                     weights='imagenet')
+            base_model = keras.applications.Xception(
+                input_shape=img_shape, include_top=base_model_only, weights="imagenet"
+            )
 
         elif base_model_name == "NASNetMobile":
-            base_model = keras.applications.NASNetMobile(input_shape=img_shape,
-                                                         include_top=base_model_only,
-                                                         weights='imagenet')
+            base_model = keras.applications.NASNetMobile(
+                input_shape=img_shape, include_top=base_model_only, weights="imagenet"
+            )
 
         elif base_model_name == "InceptionResNetV2":
-            base_model = keras.applications.InceptionResNetV2(input_shape=img_shape,
-                                                              include_top=base_model_only,
-                                                              weights='imagenet')
+            base_model = keras.applications.InceptionResNetV2(
+                input_shape=img_shape, include_top=base_model_only, weights="imagenet"
+            )
         else:
             raise KeyError("Unknown model name {}".format(base_model_name))
         return base_model
 
     def make_save_dir(self):
-        model_directory = pathlib.Path('models') / self.model_name / self.version / datetime.datetime.now().strftime(
-            "%Y_%m_%d_%H_%M_%S")
-        graph_directory = pathlib.Path('graph') / self.model_name / self.version
+        model_directory = (
+            pathlib.Path("models")
+            / self.model_name
+            / self.version
+            / datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        )
+        graph_directory = pathlib.Path("graph") / self.model_name / self.version
 
         model_directory.mkdir(parents=True, exist_ok=True)
         graph_directory.mkdir(parents=True, exist_ok=True)

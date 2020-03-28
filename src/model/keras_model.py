@@ -13,8 +13,16 @@ from utils.model_logger import logger
 
 
 class TrainInfo:
-    def __init__(self, learning_rate=0.0001, momentum=0.9, update_base=False, shuffle_buffer_size=1000, batch_size=92,
-                 warmup_batches=10, epochs=100):
+    def __init__(
+        self,
+        learning_rate=0.0001,
+        momentum=0.9,
+        update_base=False,
+        shuffle_buffer_size=1000,
+        batch_size=92,
+        warmup_batches=10,
+        epochs=100,
+    ):
         self.learning_rate = learning_rate
         self.momentum = momentum
         self.update_base = update_base
@@ -30,7 +38,7 @@ def plot_5by5(raw_train, class_names):
         plt.subplot(5, 5, i + 1)
         plt.title(class_names[tf.argmax(tf.cast(label, tf.int32))])
         plt.imshow(image)
-        plt.axis('off')
+        plt.axis("off")
     plt.show()
 
 
@@ -55,20 +63,39 @@ class DeepModel:
 
     def load_model(self):
         if self.model_info.load_model:
-            logger.debug("Loading model from {}".format(self.model_info.load_model_path))
+            logger.debug(
+                "Loading model from {}".format(self.model_info.load_model_path)
+            )
             self.model.load_weights(self.model_info.load_model_path)
 
     def make_callbacks(self, train_info: TrainInfo):
-        cb_lrate = keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=20, verbose=1,
-                                                     mode='auto', min_delta=0.0001, cooldown=0, min_lr=1e-7)
-        cb_tb_hist = keras.callbacks.TensorBoard(log_dir=str(self.model_info.graph_dir), histogram_freq=0,
-                                                 write_graph=True, write_images=False, profile_batch=None)
+        cb_lrate = keras.callbacks.ReduceLROnPlateau(
+            monitor="val_loss",
+            factor=0.5,
+            patience=20,
+            verbose=1,
+            mode="auto",
+            min_delta=0.0001,
+            cooldown=0,
+            min_lr=1e-7,
+        )
+        cb_tb_hist = keras.callbacks.TensorBoard(
+            log_dir=str(self.model_info.graph_dir),
+            histogram_freq=0,
+            write_graph=True,
+            write_images=False,
+            profile_batch=None,
+        )
         cb_checkpoint = keras.callbacks.ModelCheckpoint(
-            str(self.model_info.model_dir / './model.{epoch:03d}-{val_loss:.2f}.hdf5'), verbose=1,
-            monitor='val_accuracy',
-            save_best_only=True, mode='auto')
-        warm_up_lr = train_util.WarmUpLearningRateScheduler(train_info.warmup_batches, init_lr=train_info.learning_rate,
-                                                            verbose=1)
+            str(self.model_info.model_dir / "./model.{epoch:03d}-{val_loss:.2f}.hdf5"),
+            verbose=1,
+            monitor="val_accuracy",
+            save_best_only=True,
+            mode="auto",
+        )
+        warm_up_lr = train_util.WarmUpLearningRateScheduler(
+            train_info.warmup_batches, init_lr=train_info.learning_rate, verbose=1
+        )
 
         return [cb_lrate, cb_tb_hist, cb_checkpoint, warm_up_lr]
 
@@ -95,9 +122,12 @@ class DeepModel:
 
         print("Compile model")
         self.model.compile(
-            optimizer=keras.optimizers.RMSprop(lr=train_info.learning_rate, momentum=train_info.momentum),
+            optimizer=keras.optimizers.RMSprop(
+                lr=train_info.learning_rate, momentum=train_info.momentum
+            ),
             loss="categorical_crossentropy",
-            metrics=['accuracy'])
+            metrics=["accuracy"],
+        )
 
         self.save()
         self.model.summary()
@@ -112,11 +142,13 @@ class DeepModel:
 
         logger.info("Model Fit Started")
         try:
-            history = self.model.fit(train_batches,
-                                     epochs=initial_epochs,
-                                     validation_data=val_batches,
-                                     callbacks=callbacks,
-                                     verbose=1)
+            history = self.model.fit(
+                train_batches,
+                epochs=initial_epochs,
+                validation_data=val_batches,
+                callbacks=callbacks,
+                verbose=1,
+            )
 
             write_history(history)
         except KeyboardInterrupt as e:
@@ -177,27 +209,29 @@ class LoadedModel(DeepModel):
 
 
 def write_history(history):
-    acc = history.history['accuracy']
-    val_acc = history.history['val_accuracy']
+    acc = history.history["accuracy"]
+    val_acc = history.history["val_accuracy"]
 
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
+    loss = history.history["loss"]
+    val_loss = history.history["val_loss"]
 
     plt.figure(figsize=(8, 8))
     plt.subplot(2, 1, 1)
-    plt.plot(acc, label='Training Accuracy')
-    plt.plot(val_acc, label='Validation Accuracy')
-    plt.legend(loc='lower right')
-    plt.ylabel('Accuracy')
-    plt.title('Training and Validation Accuracy')
+    plt.plot(acc, label="Training Accuracy")
+    plt.plot(val_acc, label="Validation Accuracy")
+    plt.legend(loc="lower right")
+    plt.ylabel("Accuracy")
+    plt.title("Training and Validation Accuracy")
 
     plt.subplot(2, 1, 2)
-    plt.plot(loss, label='Training Loss')
-    plt.plot(val_loss, label='Validation Loss')
-    plt.legend(loc='upper right')
-    plt.ylabel('Cross Entropy')
-    plt.title('Training and Validation Loss')
-    plt.xlabel('epoch')
+    plt.plot(loss, label="Training Loss")
+    plt.plot(val_loss, label="Validation Loss")
+    plt.legend(loc="upper right")
+    plt.ylabel("Cross Entropy")
+    plt.title("Training and Validation Loss")
+    plt.xlabel("epoch")
     plt.show()
 
-    plt.savefig('accuracy_{}.png'.format(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
+    plt.savefig(
+        "accuracy_{}.png".format(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
+    )

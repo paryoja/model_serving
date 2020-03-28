@@ -34,5 +34,7 @@ class WarmUpLearningRateScheduler(Callback):
             lr = self.batch_count * self.init_lr / self.warmup_batches
             K.set_value(self.model.optimizer.lr, lr)
             if self.verbose > 0:
-                print('\nEpoch %05d: WarmUpLearningRateScheduler setting learning '
-                      'rate to %s.' % (self.batch_count + 1, lr))
+                print(
+                    "\nEpoch %05d: WarmUpLearningRateScheduler setting learning "
+                    "rate to %s." % (self.batch_count + 1, lr)
+                )

@@ -71,12 +71,16 @@ class DataType:
     def load_file_type(self):
         file_type = {}
         if self.data_str == DataType.People:
-            glob = pathlib.Path('data/people').glob("**/*.jpg")
+            glob = pathlib.Path("data/people").glob("**/*.jpg")
 
             for file in glob:
                 if file.name in file_type:
-                    logger.warning("Duplicated filename {} deleting it".format(file.name))
-                    logger.warning("Unlink {} and {}".format(file, file_type[file.name][1]))
+                    logger.warning(
+                        "Duplicated filename {} deleting it".format(file.name)
+                    )
+                    logger.warning(
+                        "Unlink {} and {}".format(file, file_type[file.name][1])
+                    )
                     file.unlink()
                     file_type[file.name][1].unlink()
                     del file_type[file.name]
@@ -86,12 +90,16 @@ class DataType:
 
 
 def validation(data_info):
-    data_dir = pathlib.Path('data/{}/train/'.format(data_info.data_type.data_str))
-    list_ds = tf.data.Dataset.list_files(str(data_dir / '*/*'))
-    class_name = np.array([item.name for item in data_dir.glob('*') if item.name != "LICENSE.txt"])
+    data_dir = pathlib.Path("data/{}/train/".format(data_info.data_type.data_str))
+    list_ds = tf.data.Dataset.list_files(str(data_dir / "*/*"))
+    class_name = np.array(
+        [item.name for item in data_dir.glob("*") if item.name != "LICENSE.txt"]
+    )
     for path in list_ds:
         print(path)
-        (img, path), label = process_path(path, class_names=class_name, img_size=512, keep_path=True)
+        (img, path), label = process_path(
+            path, class_names=class_name, img_size=512, keep_path=True
+        )
         print(path, label)
 
 
@@ -116,10 +124,12 @@ def confusing_data(model, data_info, validate=False):
             if prob < threshold:
                 need_to_train_path.append(path)
 
-    logger.info("Finished classifying train data : Total {}".format(len(need_to_train_path)))
+    logger.info(
+        "Finished classifying train data : Total {}".format(len(need_to_train_path))
+    )
     with open("more_train_{}.txt".format(validate), "w") as w:
         for path in need_to_train_path:
-            w.write(path.numpy().decode('utf-8'))
+            w.write(path.numpy().decode("utf-8"))
             w.write("\n")
     logger.info("elapsed time {}".format(time.time() - start_time))
     logger.info("train count {}".format(len(need_to_train_path)))
@@ -148,29 +158,49 @@ class Dataset:
 
             self.data_count = len(need_to_train_path)
         else:
-            data_dir = pathlib.Path('data/{}/train/'.format(dataset_info.data_type.data_str))
+            data_dir = pathlib.Path(
+                "data/{}/train/".format(dataset_info.data_type.data_str)
+            )
 
-            list_ds = tf.data.Dataset.list_files(str(data_dir / '*/*'))
-            self.data_count = len(list(data_dir.glob('**/*')))
+            list_ds = tf.data.Dataset.list_files(str(data_dir / "*/*"))
+            self.data_count = len(list(data_dir.glob("**/*")))
 
-        val_dir = pathlib.Path('data/{}/validate/'.format(dataset_info.data_type.data_str))
-        val_list_ds = tf.data.Dataset.list_files(str(val_dir / '*/*'))
+        val_dir = pathlib.Path(
+            "data/{}/validate/".format(dataset_info.data_type.data_str)
+        )
+        val_list_ds = tf.data.Dataset.list_files(str(val_dir / "*/*"))
 
-        self.class_names = np.array([item.name for item in val_dir.glob('*') if item.name != "LICENSE.txt"])
+        self.class_names = np.array(
+            [item.name for item in val_dir.glob("*") if item.name != "LICENSE.txt"]
+        )
         logger.debug("Class names {}".format(self.class_names))
-        self.validate_count = len(list(val_dir.glob('**/*')))
+        self.validate_count = len(list(val_dir.glob("**/*")))
 
-        logger.info("Data count {}, Validate count {}".format(self.data_count, self.validate_count))
+        logger.info(
+            "Data count {}, Validate count {}".format(
+                self.data_count, self.validate_count
+            )
+        )
         debug = False
         if not debug:
-            process_path_partial = functools.partial(process_path, class_names=self.class_names,
-                                                     img_size=dataset_info.img_size, keep_path=keep_path)
+            process_path_partial = functools.partial(
+                process_path,
+                class_names=self.class_names,
+                img_size=dataset_info.img_size,
+                keep_path=keep_path,
+            )
 
         else:
-            process_path_partial = functools.partial(debug_path, class_names=self.class_names)
+            process_path_partial = functools.partial(
+                debug_path, class_names=self.class_names
+            )
 
-        self.train_ds = list_ds.map(process_path_partial, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-        self.val_ds = val_list_ds.map(process_path_partial, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        self.train_ds = list_ds.map(
+            process_path_partial, num_parallel_calls=tf.data.experimental.AUTOTUNE
+        )
+        self.val_ds = val_list_ds.map(
+            process_path_partial, num_parallel_calls=tf.data.experimental.AUTOTUNE
+        )
 
         # import matplotlib.pyplot as plt
         # for img in self.train_ds:
