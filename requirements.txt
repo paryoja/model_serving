@@ -1,7 +1,7 @@
 flask==1.1.1
 tensorflow==2.1.0
 requests==2.22.0
-pillow==7.0.0
+pillow==8.1.1
 gunicorn==20.0.4
 numpy==1.18.1
 lz4==3.0.2
